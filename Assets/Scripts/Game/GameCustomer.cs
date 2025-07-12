@@ -3,28 +3,33 @@ using System.Collections.Generic;
 
 public class GameCustomer
 {
-    public List<string> Orders { get; } = new();
+    public List<FoodOrderInstance> Orders { get; } = new();
 
     public int Score { get; private set; }
+
+    private int correctCount;
 
     public void Apply()
     {
         Score = Orders.Count * 100;
+        correctCount = 0;
     }
 
-    public bool TryMatchOrder(string order)
+    public (bool, int) TryMatchOrder(string order)
     {
-        int index = Orders.FindIndex((x) => x.Equals(order));
+        int index = Orders.FindIndex((x) => x.name.Equals(order) && !x.met);
 
         if (index < 0)
-            return false;
+            return (false, -1);
 
-        Orders.RemoveAt(index);
-        return true;
+        Orders[index].met = true;
+
+        correctCount++;
+        return (true, index);
     }
 
     public bool CompletedOrder()
     {
-        return Orders.Count == 0;
+        return correctCount == Orders.Count;
     }
 }

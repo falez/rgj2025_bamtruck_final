@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using UnityEngine;
 
@@ -17,14 +18,28 @@ public class CustomerWidget : MonoBehaviour
 
     private void Awake()
     {
-        customer1.anchoredPosition = start.anchoredPosition;
-        customer2.anchoredPosition = start.anchoredPosition;
+        ResetStates();
     }
 
     public void ResetStates()
     {
+        customer1.anchoredPosition = start.anchoredPosition;
+        customer2.anchoredPosition = start.anchoredPosition;
         currentCustomer = null;
         nextCustomer = null;
+    }
+
+    public void Shake(float duration)
+    {
+        currentCustomer.DOPunchAnchorPos(new(10.0f, 0.0f), duration, 20);
+    }
+
+    public void Boing(float duration, Action onComplete = null)
+    {
+        var tw = currentCustomer.DOPunchScale(new(0.05f, 0.1f), duration);
+
+        if (onComplete != null)
+            tw.OnComplete(onComplete.Invoke);
     }
 
     public void Next(System.Action onComplete)
@@ -41,6 +56,7 @@ public class CustomerWidget : MonoBehaviour
             seq.Join(TweenIn(nextCustomer));
             seq.AppendCallback(() =>
             {
+                currentCustomer.localScale = Vector3.one;
                 (nextCustomer, currentCustomer) = (currentCustomer, nextCustomer);
             });
         }

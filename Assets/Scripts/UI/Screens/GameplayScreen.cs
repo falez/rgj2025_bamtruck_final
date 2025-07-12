@@ -1,88 +1,133 @@
 using System;
+using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class GameplayScreen : ScreenBase
 {
+    [SerializeField] private GameOverPopUp gameOverPopUp;
+
     [SerializeField] private Button pauseButton;
 
     [SerializeField] private BamTruckGameplayController gameplayController;
 
-    [SerializeField] private Button triangleButton;
-    [SerializeField] private Button squareButton;
-    [SerializeField] private Button circleButton;
-
-    [SerializeField] GameObject bubble;
+    [SerializeField] private GameObject bubble;
     [SerializeField] private CustomerWidget customerWidget;
+    [SerializeField] private OrderBubbleWidget orderBubbleWidget;
+
+    [SerializeField] private GestureRecog gestureRecognizer;
+
+    [SerializeField] private TextMeshProUGUI debugStateLabel;
+    [SerializeField] private TextMeshProUGUI debugGestureLabel;
+
+    private GameCustomer currentCustomer;
+
+    private bool gameIsOver = false;
 
     protected override bool AllowBack => false;
-
-    private bool allowAnswer = false;
 
     private void Start()
     {
         pauseButton.onClick.AddListener(OnClickPause);
 
-        triangleButton.onClick.AddListener(OnAnswerTriangle);
-        squareButton.onClick.AddListener(OnAnswerSquare);
-        circleButton.onClick.AddListener(OnAnswerCircle);
-
         gameplayController.OnRoundComplete += GameplayController_OnRoundComplete;
         gameplayController.OnCustomerChanged += GameplayController_OnCustomerChanged;
+        gameplayController.OnGameEnded += GameplayController_OnGameEnded;
+        gameplayController.OnCustomerOrderCorrect += GameplayController_OnCustomerOrderCorrect;
+
+        gestureRecognizer.onGestureMade += GestureRecognizer_onGestureMade;
+    }
+
+    private void GameplayController_OnCustomerOrderCorrect(int index)
+    {
+        orderBubbleWidget.TickFood(index);
+        customerWidget.Boing(0.5f);
+    }
+
+    private void GameplayController_OnGameEnded()
+    {
+        gestureRecognizer.AllowRecognition = false;
         bubble.SetActive(false);
+        gameIsOver = true;
+        // TODO: Show game over
+
+        Sequence seq = DOTween.Sequence();
+        seq.AppendInterval(1.0f);
+        seq.OnComplete(() =>
+        {
+            ScreenManager.Show(gameOverPopUp);
+        });
+        seq.Play();
     }
 
-    private void GameplayController_OnRoundComplete(bool success, int score)
+    protected override void OnFocusTransitionCompleted()
     {
-        allowAnswer = false;
-        bubble.SetActive(false);
-    }
-
-    private void GameplayController_OnCustomerChanged(GameCustomer next)
-    {
-        allowAnswer = false;
-        customerWidget.Next(OnCustomerChanged);
-    }
-
-    private void OnCustomerChanged()
-    {
-        allowAnswer = true;
-        bubble.SetActive(true);
-    }
-
-    private void OnAnswerSquare()
-    {
-        if (!allowAnswer) return;
-
-        gameplayController.Answer("Square");
-    }
-
-    private void OnAnswerTriangle()
-    {
-        if (!allowAnswer) return;
-
-        gameplayController.Answer("Triangle");
-    }
-    private void OnAnswerCircle()
-    {
-        if (!allowAnswer) return;
-
-        gameplayController.Answer("Circle");
-    }
-
-
-    private void OnClickPause()
-    {
-        Hide();
+        if (gameIsOver)
+        {
+            Hide(true);
+        }
     }
 
     protected override void OnShowTransitionStart()
     {
+        bubble.SetActive(false);
         customerWidget.ResetStates();
     }
 
     protected override void OnShowTransitionCompleted()
     {
+        gameIsOver = false;
         gameplayController.StartGame();
+    }
+
+    private void Update()
+    {
+        debugStateLabel.text = $"Time Left:\n{gameplayController.TimeLeft}\n\nScore:\n{gameplayController.Score}\n\nLife:\n{gameplayController.Life}";
+    }
+
+    private void GestureRecognizer_onGestureMade(string gestureName, float score)
+    {
+        debugGestureLabel.text = $"{gestureName}\n({score})";
+        gameplayController.Answer(gestureName);
+    }
+
+    private void GameplayController_OnRoundComplete(bool success, int score)
+    {
+        gestureRecognizer.AllowRecognition = false;
+        gameplayController.Pause = true;
+
+        if (!success)
+        {
+            customerWidget.Shake(0.5f);
+            bubble.SetActive(false);
+        }
+        else
+        {
+            customerWidget.Boing(0.5f, () =>
+            {
+                bubble.SetActive(false);
+            });
+        }
+    }
+
+    private void GameplayController_OnCustomerChanged(GameCustomer next)
+    {
+        gestureRecognizer.AllowRecognition = false;
+        customerWidget.Next(OnCustomerChanged);
+        currentCustomer = next;
+    }
+
+    private void OnCustomerChanged()
+    {
+        gestureRecognizer.AllowRecognition = true;
+        gameplayController.Pause = false;
+        orderBubbleWidget.Populate(currentCustomer.Orders);
+        bubble.SetActive(true);
+    }
+
+    private void OnClickPause()
+    {
+        Hide();
     }
 }
