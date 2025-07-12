@@ -25,22 +25,39 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
 
     protected virtual bool AllowBack => true;
 
-    private IScreenShowHandle showHandle;
-    private IScreenHideHandle hideHandle;
+    private IScreenShowTransitioner showTransitioner;
+    private IScreenFocusTransitioner focusTransitioner;
+    private IScreenHideTransitioner hideTransitioner;
 
-    private void Awake()
+    protected virtual void OnShowTransitionCompleted()
+    { }
+
+    protected virtual void OnHideTransitionCompleted()
+    { }
+
+    protected virtual void OnFocusTransitionCompleted()
+    { }
+
+    protected virtual void OnUnfocusTransitionCompleted()
+    { }
+
+    protected virtual void Awake()
     {
         canvas = GetComponent<Canvas>();
         canvasGroup = GetComponent<CanvasGroup>();
         raycaster = GetComponent<GraphicRaycaster>();
 
-        if (!TryGetComponent(out showHandle))
+        if (!TryGetComponent(out showTransitioner))
         {
-            showHandle = new NullScreenShowHandle(this);
+            showTransitioner = new NullScreenShowTransitioner(this);
         }
-        if (!TryGetComponent(out hideHandle))
+        if (!TryGetComponent(out hideTransitioner))
         {
-            hideHandle = new NullScreenHideHandle(this);
+            hideTransitioner = new NullScreenHideTransitioner(this);
+        }
+        if (!TryGetComponent(out focusTransitioner))
+        {
+            focusTransitioner = new NullScreenFocusTransitioner(this);
         }
 
         canvas.enabled = false;
@@ -59,7 +76,7 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
         }
         else
         {
-            showHandle.Run(Show_CompletedCallback);
+            showTransitioner.Run(Show_CompletedCallback);
         }
     }
 
@@ -75,7 +92,7 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
         }
         else
         {
-            hideHandle.Run(Hide_CompletedCallback);
+            hideTransitioner.Run(Hide_CompletedCallback);
         }
     }
 
@@ -86,12 +103,12 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
 
     void IScreen.Focus()
     {
-        raycaster.enabled = true;
+        focusTransitioner.Focus(Focus_CompletedCallback);
     }
 
     void IScreen.Unfocus()
     {
-        raycaster.enabled = false;
+        focusTransitioner.Unfocus(Unfocus_CompletedCallback);
     }
 
     bool IScreen.TryHide()
@@ -108,10 +125,22 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
     private void Show_CompletedCallback()
     {
         OnShowComplete?.Invoke(this);
+        OnShowTransitionCompleted();
     }
 
     private void Hide_CompletedCallback()
     {
         OnHideComplete?.Invoke(this);
+        OnHideTransitionCompleted();
+    }
+
+    private void Focus_CompletedCallback()
+    {
+        OnFocusTransitionCompleted();
+    }
+
+    private void Unfocus_CompletedCallback()
+    {
+        OnUnfocusTransitionCompleted();
     }
 }
