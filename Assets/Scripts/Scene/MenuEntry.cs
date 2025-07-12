@@ -8,6 +8,7 @@ public class MenuEntry : MonoBehaviour
 
     private void Start()
     {
+        ScreenManager.Reset();
         ScreenManager.Show(startingScreen, instant);
     }
 

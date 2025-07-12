@@ -33,6 +33,26 @@ public class ScreenManager
 
     private static IScreen currentScreenHiding;
 
+    public static void Reset()
+    {
+        screenStack.Clear();
+    }
+
+    public static void ShowOverlay(IScreen screen, bool instant = false)
+    {
+        screen.OnShowStart += OnShowOverlayStarted;
+        screen.OnShowComplete += OnShowOverlayCompleted;
+        screen.OnHideStart += OnHideOverlayStarted;
+        screen.OnHideComplete += OnHideOverlayCompleted;
+
+        if (screenStack.TryPeek(out IScreen currentScreen))
+        {
+            currentScreen.Unfocus();
+        }
+
+        screen.Show(instant);
+    }
+
     public static void Show(IScreen screen, bool instant = false)
     {
         screen.OnShowStart += OnShowStarted;
@@ -91,6 +111,34 @@ public class ScreenManager
         {
             screenStack.Pop();
         }
+
+        if (screenStack.TryPeek(out IScreen currentScreen))
+        {
+            currentScreen.Focus();
+        }
+    }
+
+    private static void OnShowOverlayStarted(IScreen context)
+    {
+        Debug.Assert(context != null, "context cannot be null");
+    }
+
+    private static void OnShowOverlayCompleted(IScreen context)
+    {
+        Debug.Assert(context != null, "context cannot be null");
+    }
+
+    private static void OnHideOverlayStarted(IScreen context)
+    {
+        Debug.Assert(context != null, "context cannot be null");
+    }
+
+    private static void OnHideOverlayCompleted(IScreen context)
+    {
+        context.OnShowStart -= OnShowOverlayStarted;
+        context.OnShowComplete -= OnShowOverlayCompleted;
+        context.OnHideStart -= OnHideOverlayStarted;
+        context.OnHideComplete -= OnHideOverlayCompleted;
 
         if (screenStack.TryPeek(out IScreen currentScreen))
         {

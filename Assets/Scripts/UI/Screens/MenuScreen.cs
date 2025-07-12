@@ -1,11 +1,14 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MenuScreen : ScreenBase
 {
     [SerializeField] private Button playButton;
     [SerializeField] private Button settingsButton;
+    [SerializeField] private Button upgradeButton;
 
+    [SerializeField] private DailyLoginPopUp dailyPopUp;
     [SerializeField] private SettingsScreen settingsScreen;
     [SerializeField] private GameplayScreen gameScreen;
 
@@ -24,6 +27,13 @@ public class MenuScreen : ScreenBase
     {
         playButton.onClick.AddListener(OnClickPlay);
         settingsButton.onClick.AddListener(OnClickSettings);
+        upgradeButton.onClick.AddListener(OnClickUpgrades);
+    }
+
+    private void OnClickUpgrades()
+    {
+        PlayerData.Clear();
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnClickPlay()
@@ -38,8 +48,17 @@ public class MenuScreen : ScreenBase
         ScreenManager.Show(settingsScreen);
     }
 
+    protected override void OnFocusTransitionCompleted()
+    {
+        if (DailySystem.CheckDailyLogin())
+            ScreenManager.Show(dailyPopUp);
+    }
+
     protected override void OnShowTransitionCompleted()
     {
         focusTransitioner.UnfocusIsHide = false;
+
+        if (DailySystem.CheckDailyLogin())
+            ScreenManager.Show(dailyPopUp);
     }
 }
