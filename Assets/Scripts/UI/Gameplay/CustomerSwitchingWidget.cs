@@ -71,7 +71,10 @@ public class CustomerSwitchingWidget : MonoBehaviour
             seq.Join(TweenIn(nextCustomer));
             seq.AppendCallback(() =>
             {
-                currentCustomer.localScale = Vector3.one;
+                var customer = currentCustomer.GetComponentInChildren<CustomerWidget>();
+                var tr = customer.GetComponent<RectTransform>();
+                tr.localScale = Vector3.one;
+
                 (nextCustomer, currentCustomer) = (currentCustomer, nextCustomer);
             });
         }
