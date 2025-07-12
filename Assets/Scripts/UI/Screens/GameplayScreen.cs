@@ -13,7 +13,7 @@ public class GameplayScreen : ScreenBase
     [SerializeField] private BamTruckGameplayController gameplayController;
 
     [SerializeField] private GameObject bubble;
-    [SerializeField] private CustomerWidget customerWidget;
+    [SerializeField] private CustomerSwitchingWidget customerWidget;
     [SerializeField] private OrderBubbleWidget orderBubbleWidget;
 
     [SerializeField] private GestureRecog gestureRecognizer;
