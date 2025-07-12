@@ -1,4 +1,3 @@
-using Unity.Burst.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,6 +27,18 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
     private IScreenShowTransitioner showTransitioner;
     private IScreenFocusTransitioner focusTransitioner;
     private IScreenHideTransitioner hideTransitioner;
+
+    protected virtual void OnShowTransitionStart()
+    { }
+
+    protected virtual void OnHideTransitionStart()
+    { }
+
+    protected virtual void OnFocusTransitionStart()
+    { }
+
+    protected virtual void OnUnfocusTransitionStart()
+    { }
 
     protected virtual void OnShowTransitionCompleted()
     { }
@@ -66,6 +77,7 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
     void IScreen.Show(bool instant)
     {
         OnShowStart?.Invoke(this);
+        OnShowTransitionStart();
 
         if (instant)
         {
@@ -83,6 +95,8 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
     void IScreen.Hide(bool instant)
     {
         OnHideStart?.Invoke(this);
+        OnHideTransitionStart();
+
         if (instant)
         {
             canvas.enabled = false;
@@ -103,11 +117,13 @@ public abstract class ScreenBase : MonoBehaviour, IScreen
 
     void IScreen.Focus()
     {
+        OnFocusTransitionStart();
         focusTransitioner.Focus(Focus_CompletedCallback);
     }
 
     void IScreen.Unfocus()
     {
+        OnUnfocusTransitionStart();
         focusTransitioner.Unfocus(Unfocus_CompletedCallback);
     }
 
