@@ -2,25 +2,49 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
+public struct FoodLineUp
+{
+    [SerializeField] private IFoodOrder food;
+    [SerializeField] private GameGesture gesture;
+
+    public IFoodOrder Food => food;
+    public GameGesture Gesture => gesture;
+
+    public FoodLineUp(IFoodOrder food, GameGesture gesture)
+    {
+        this.food = food;
+        this.gesture = gesture;
+    }
+}
+
 public class BamTruckGameplayController : MonoBehaviour
 {
-    public float duration = 60.0f;
+    private const int DIFF2 = 3;
+    private const int DIFF3 = 6;
+    private const int DIFF4 = 9;
+    private const int MINFORJUMBLE = 4;
 
-    public List<FoodOrder> foods;
-    private List<string> gestures = new() { "Triangle", "Square", "S", "RightArrow" };
+    [SerializeField] private float duration = 60.0f;
 
-    private float timeLeft;
+    [SerializeField] private List<FoodOrderSO> foods;
+
+    [SerializeField] private List<GameGesture> gestures;
+
+    private float invDuration = 1.0f;
+    private float timeLeft = 1.0f;
 
     private GameCustomer currentCustomer;
 
-    private int life = 3;
-
     private int score = 0;
 
+    /*
+    private int life = 3;
     public int Life => life;
+    */
 
     public int Score => score;
     public float TimeLeft => timeLeft;
+    public float NormalizedDuration => timeLeft * invDuration;
 
     public bool Pause { get => paused; set => paused = value; }
 
@@ -28,11 +52,15 @@ public class BamTruckGameplayController : MonoBehaviour
 
     public delegate void CustomerOrderCorrectEvent(int index);
 
-    public delegate void RoundCompleteEvent(bool success, int score);
+    public delegate void RoundCompleteEvent(bool success, int score, int totalScore);
 
     public delegate void GameSignalEvent();
 
+    public delegate void FoodLineUpChangeEvent(List<FoodLineUp> list, bool first);
+
     public event CustomerOrderCorrectEvent OnCustomerOrderCorrect;
+
+    public event CustomerOrderCorrectEvent OnCustomerOrderWrong;
 
     public event RoundCompleteEvent OnRoundComplete;
 
@@ -42,29 +70,71 @@ public class BamTruckGameplayController : MonoBehaviour
 
     public event CustomerChangeEvent OnCustomerChanged;
 
-    private readonly Dictionary<string, FoodOrder> gestureFoodMap = new();
+    public event FoodLineUpChangeEvent OnFoodLineUpChanged;
+
+    private readonly Dictionary<string, IFoodOrder> gestureFoodMap = new();
 
     private bool gameStarted = false;
     private bool paused = false;
     private int correct = 0;
 
-    public void StartGame()
+    private List<FoodLineUp> foodLineUp = new();
+
+    private bool enableJumbling = false;
+    private int gestureMadeSinceLastJumble = 0;
+
+    private void Awake()
     {
-        life = 3;
+        invDuration = 1.0f / duration;
+    }
+
+    public void InitializeValues()
+    {
+        //life = 3;
         score = 0;
         timeLeft = duration;
-        gameStarted = true;
+        gameStarted = false;
         paused = false;
         correct = 0;
+        enableJumbling = false;
+        gestureMadeSinceLastJumble = 0;
 
         gestureFoodMap.Clear();
-
-        OnGameStarted?.Invoke();
+        foodLineUp.Clear();
 
         for (int i = 0; i < gestures.Count; i++)
         {
-            gestureFoodMap.Add(gestures[i], foods[i]);
+            gestureFoodMap.Add(gestures[i].GestureClass, foods[i]);
+            foodLineUp.Add(new FoodLineUp(foods[i], gestures[i]));
         }
+
+        OnFoodLineUpChanged?.Invoke(foodLineUp, true);
+    }
+
+    private void JumbleFood()
+    {
+        gestureFoodMap.Clear();
+        foodLineUp.Clear();
+
+        List<GameGesture> copy = new(gestures);
+
+        copy.Shuffle();
+
+        for (int i = 0; i < copy.Count; i++)
+        {
+            gestureFoodMap.Add(copy[i].GestureClass, foods[i]);
+            foodLineUp.Add(new FoodLineUp(foods[i], copy[i]));
+        }
+
+        OnFoodLineUpChanged?.Invoke(foodLineUp, false);
+    }
+
+    public void StartGame()
+    {
+        gameStarted = true;
+        paused = false;
+
+        OnGameStarted?.Invoke();
 
         SwitchCustomer();
     }
@@ -72,7 +142,6 @@ public class BamTruckGameplayController : MonoBehaviour
     private void Update()
     {
         if (!gameStarted) return;
-
         if (paused) return;
 
         timeLeft -= Time.deltaTime;
@@ -84,45 +153,30 @@ public class BamTruckGameplayController : MonoBehaviour
         }
     }
 
-    private FoodOrder GestureToOrder(string gestureClass)
+    private IFoodOrder GetFoodOrderFromGesture(string gestureClass)
     {
-        gestureFoodMap.TryGetValue(gestureClass, out FoodOrder value);
+        gestureFoodMap.TryGetValue(gestureClass, out IFoodOrder value);
         return value;
     }
 
     public void Answer(string gesture)
     {
-        FoodOrder match = GestureToOrder(gesture);
-        (bool success, int index) = currentCustomer.TryMatchOrder(match.name);
+        IFoodOrder match = GetFoodOrderFromGesture(gesture);
+        (bool success, int index) = currentCustomer.TryMatchOrder(match.Id);
 
-        Debug.Log($"{gesture} {match.name}");
+        Debug.Log($"{gesture} {match.Id}");
         if (!success)
         {
             Debug.Log($"Wrong Order! Customer unhappy!");
-            OnRoundComplete?.Invoke(false, 0);
-
-            bool ended = DecreaseHealth();
-
-            if (ended)
-            {
-                GameOver();
-            }
-            else
-            {
-                Sequence seq = DOTween.Sequence();
-                seq.AppendInterval(0.6f);
-                seq.OnComplete(() =>
-                {
-                    SwitchCustomer();
-                });
-                seq.Play();
-            }
+            score = Mathf.Max(score - 150, 0);
+            OnCustomerOrderWrong?.Invoke(index);
 
             return;
         }
         else
         {
             OnCustomerOrderCorrect?.Invoke(index);
+            ValidateJumble();
         }
 
         if (currentCustomer.CompletedOrder())
@@ -131,23 +185,41 @@ public class BamTruckGameplayController : MonoBehaviour
         }
     }
 
+    private void ValidateJumble()
+    {
+        if (!enableJumbling) return;
+
+        gestureMadeSinceLastJumble++;
+
+        if (gestureMadeSinceLastJumble > MINFORJUMBLE)
+        {
+            float r = Random.Range(0.0f, 1.0f);
+            if (r > 0.75f)
+            {
+                JumbleFood();
+                gestureMadeSinceLastJumble = 0;
+            }
+        }
+    }
+
     private void RewardPointsThenNextCustomer()
     {
         Debug.Log("All order met! Custommer happy!");
-        score += currentCustomer.Score;
+        int scr = 100 * currentCustomer.OrderCount;
+        score += scr;
         correct++;
 
-        OnRoundComplete?.Invoke(true, currentCustomer.Score);
+        if (correct >= DIFF4)
+        {
+            enableJumbling = true;
+        }
+
+        OnRoundComplete?.Invoke(true, scr, score);
 
         Sequence seq = DOTween.Sequence();
         seq.AppendInterval(0.6f);
-        seq.OnComplete(() =>
-        {
-            SwitchCustomer();
-        });
-
+        seq.OnComplete(() => { SwitchCustomer(); });
         seq.Play();
-        // Some Delay needed
     }
 
     private void SwitchCustomer()
@@ -155,26 +227,12 @@ public class BamTruckGameplayController : MonoBehaviour
         var oldCustomer = currentCustomer;
 
         int diff = 1;
-
-        if (correct > 5) diff++;
-        if (correct > 10) diff++;
+        if (correct >= DIFF2) diff++;
+        if (correct >= DIFF3) diff++;
 
         currentCustomer = GetNext(diff);
 
         OnCustomerChanged?.Invoke(currentCustomer);
-
-        // Go out current if null
-        if (oldCustomer != null)
-            Debug.Log("Customer leaving...");
-        // make new customer
-        // come in
-        Debug.Log("Next customer entering...");
-        CustomerReady();
-    }
-
-    private void CustomerReady()
-    {
-        Debug.Log($"Customer asking for {string.Join(",", currentCustomer.Orders)}");
     }
 
     private void GameOver()
@@ -184,11 +242,13 @@ public class BamTruckGameplayController : MonoBehaviour
         Debug.Log("Game Over!");
     }
 
+    /*
     private bool DecreaseHealth()
     {
         life--;
         return life <= 0;
     }
+    */
 
     private GameCustomer GetNext(int diff)
     {
@@ -196,13 +256,13 @@ public class BamTruckGameplayController : MonoBehaviour
 
         for (int i = 0; i < diff; i++)
         {
+            // Should change to randomizing from foodLineUp
+
             int ran = Random.Range(0, gestures.Count);
-            string gestureName = gestures[ran];
+            string gestureName = gestures[ran].GestureClass;
 
             cust.Orders.Add(new FoodOrderInstance(gestureFoodMap[gestureName]));
         }
-
-        cust.Apply();
 
         return cust;
     }

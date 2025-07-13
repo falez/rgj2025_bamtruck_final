@@ -5,19 +5,11 @@ public class GameCustomer
 {
     public List<FoodOrderInstance> Orders { get; } = new();
 
-    public int Score { get; private set; }
-
-    private int correctCount;
-
-    public void Apply()
-    {
-        Score = Orders.Count * 100;
-        correctCount = 0;
-    }
+    private int correctCount = 0;
 
     public (bool, int) TryMatchOrder(string order)
     {
-        int index = Orders.FindIndex((x) => x.name.Equals(order) && !x.met);
+        int index = Orders.FindIndex((x) => x.Id.Equals(order) && !x.met);
 
         if (index < 0)
             return (false, -1);
@@ -27,6 +19,8 @@ public class GameCustomer
         correctCount++;
         return (true, index);
     }
+
+    public int OrderCount => Orders.Count;
 
     public bool CompletedOrder()
     {

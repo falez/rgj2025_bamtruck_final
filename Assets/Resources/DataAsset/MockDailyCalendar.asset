@@ -16,15 +16,15 @@ MonoBehaviour:
   - data: {fileID: 11400000, guid: f1abccc8999d0d346bb4fea220d79d8f, type: 2}
     iconOverride: {fileID: 0}
     amount: 10
-  - data: {fileID: 11400000, guid: 8c38fe853b906c74f80cd336d54fbaed, type: 2}
-    iconOverride: {fileID: 0}
-    amount: 2
   - data: {fileID: 11400000, guid: f1abccc8999d0d346bb4fea220d79d8f, type: 2}
     iconOverride: {fileID: 0}
     amount: 20
-  - data: {fileID: 11400000, guid: b493bcd23189d8d4ba2260065c65dcdf, type: 2}
+  - data: {fileID: 11400000, guid: f1abccc8999d0d346bb4fea220d79d8f, type: 2}
     iconOverride: {fileID: 0}
-    amount: 2
+    amount: 20
+  - data: {fileID: 11400000, guid: f1abccc8999d0d346bb4fea220d79d8f, type: 2}
+    iconOverride: {fileID: 0}
+    amount: 30
   - data: {fileID: 11400000, guid: f1abccc8999d0d346bb4fea220d79d8f, type: 2}
     iconOverride: {fileID: 0}
     amount: 30

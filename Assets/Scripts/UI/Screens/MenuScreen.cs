@@ -58,7 +58,9 @@ public class MenuScreen : ScreenBase
     {
         focusTransitioner.UnfocusIsHide = false;
 
+        /*
         if (DailySystem.CheckDailyLogin())
             ScreenManager.Show(dailyPopUp);
+        */
     }
 }

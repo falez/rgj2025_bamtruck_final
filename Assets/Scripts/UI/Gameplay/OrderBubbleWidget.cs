@@ -6,22 +6,22 @@ using UnityEngine.Pool;
 public interface IFoodOrder
 {
     Sprite Sprite { get; }
-    string Name { get; }
+    string Id { get; }
 }
 
 [Serializable]
 public struct FoodOrder : IFoodOrder
 {
     public Sprite sprite;
-    public string name;
+    public string id;
 
     public Sprite Sprite => sprite;
 
-    public string Name => name;
+    public string Id => id;
 
     public override string ToString()
     {
-        return name;
+        return id;
     }
 }
 
@@ -29,57 +29,57 @@ public struct FoodOrder : IFoodOrder
 public class FoodOrderInstance : IFoodOrder
 {
     public Sprite sprite;
-    public string name;
+    public string id;
     public bool met;
 
     public Sprite Sprite => sprite;
 
-    public string Name => name;
+    public string Id => id;
 
     public FoodOrderInstance(IFoodOrder order)
     {
         sprite = order.Sprite;
-        name = order.Name;
+        id = order.Id;
         met = false;
     }
 
     public override string ToString()
     {
-        return name;
+        return id;
     }
 }
 
 public class OrderBubbleWidget : MonoBehaviour
 {
-    [SerializeField] private FoodWidget foodPrefab;
+    [SerializeField] private FoodOrderWidget foodPrefab;
 
     [SerializeField] private RectTransform content;
 
-    private readonly List<FoodWidget> foodWidgets = new();
+    private readonly List<FoodOrderWidget> foodWidgets = new();
 
-    private ObjectPool<FoodWidget> pool;
+    private ObjectPool<FoodOrderWidget> pool;
 
     private void Awake()
     {
-        pool = new ObjectPool<FoodWidget>(CreateFoodWidget, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, true, 4, 8);
+        pool = new ObjectPool<FoodOrderWidget>(CreateFoodWidget, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, true, 4, 8);
     }
 
-    private FoodWidget CreateFoodWidget()
+    private FoodOrderWidget CreateFoodWidget()
     {
         return Instantiate(foodPrefab);
     }
 
-    private void OnTakeFromPool(FoodWidget widget)
+    private void OnTakeFromPool(FoodOrderWidget widget)
     {
         widget.gameObject.SetActive(true);
     }
 
-    private void OnReturnedToPool(FoodWidget widget)
+    private void OnReturnedToPool(FoodOrderWidget widget)
     {
         widget.gameObject.SetActive(false);
     }
 
-    private void OnDestroyPoolObject(FoodWidget widget)
+    private void OnDestroyPoolObject(FoodOrderWidget widget)
     {
         Destroy(widget.gameObject);
     }

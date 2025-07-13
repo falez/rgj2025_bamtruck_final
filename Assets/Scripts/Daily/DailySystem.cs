@@ -13,8 +13,12 @@ public static class DailySystem
     public static bool CheckDailyLogin()
     {
         DateTime lastLogged = PlayerData.LastLoggedDate;
-        DateTime nextReward = lastLogged.AddDays(1.0f);
-        DateTime now = DateTime.UtcNow.Date;
+        //DateTime nextReward = lastLogged.AddDays(1.0f);
+        //DateTime now = DateTime.UtcNow.Date;
+        DateTime nextReward = lastLogged.AddSeconds(5.0f);
+        DateTime now = DateTime.UtcNow;
+
+        Debug.Log($"Last: {lastLogged}\nNext: {nextReward}\nNow: {now}");
 
         return now.CompareTo(nextReward) > 0;
     }

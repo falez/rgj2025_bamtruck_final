@@ -31,18 +31,20 @@ public class CustomerSwitchingWidget : MonoBehaviour
 
     public void Shake(float duration)
     {
+        DOTween.Kill(this, true);
         var customer = currentCustomer.GetComponentInChildren<CustomerWidget>();
         customer.MakeAngryFace();
-        currentCustomer.DOPunchAnchorPos(new(10.0f, 0.0f), duration, 20);
+        currentCustomer.DOPunchAnchorPos(new(10.0f, 0.0f), duration, 20).SetId(this);
     }
 
     public void Boing(float duration, Action onComplete = null)
     {
+        DOTween.Kill(this, true);
         var customer = currentCustomer.GetComponentInChildren<CustomerWidget>();
         customer.MakeHappyFace();
 
         var tr = customer.GetComponent<RectTransform>();
-        var tw = tr.DOPunchScale(new(0.0f, 0.1f), duration);
+        var tw = tr.DOPunchScale(new(0.0f, 0.1f), duration).SetId(this);
 
         tw.OnComplete(() =>
         {
