@@ -59,8 +59,8 @@ public static class PlayerData
         string tickStr = PlayerPrefs.GetString("LastLoggedDate", "0");
         long ticks = Convert.ToInt64(tickStr);
 
-        //LastLoggedDate = new DateTime(ticks).Date;
-        LastLoggedDate = new DateTime(ticks);
+        LastLoggedDate = new DateTime(ticks).Date;
+        //LastLoggedDate = new DateTime(ticks);
 
         string json = PlayerPrefs.GetString("Wallet", "{}");
         Debug.Log(json);
@@ -87,8 +87,8 @@ public static class PlayerData
     public static void UpdateDailyDetails(bool reset)
     {
         DaysLogged = reset ? 0 : (DaysLogged + 1);
-        //LastLoggedDate = DateTime.UtcNow.Date;
-        LastLoggedDate = DateTime.UtcNow;
+        LastLoggedDate = DateTime.UtcNow.Date;
+        //LastLoggedDate = DateTime.UtcNow;
         PlayerPrefs.SetInt("DaysLogged", DaysLogged);
         PlayerPrefs.SetString("LastLoggedDate", LastLoggedDate.Ticks.ToString());
     }

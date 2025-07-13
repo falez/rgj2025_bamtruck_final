@@ -37,11 +37,6 @@ public class BamTruckGameplayController : MonoBehaviour
 
     private int score = 0;
 
-    /*
-    private int life = 3;
-    public int Life => life;
-    */
-
     public int Score => score;
     public float TimeLeft => timeLeft;
     public float NormalizedDuration => timeLeft * invDuration;
@@ -56,6 +51,8 @@ public class BamTruckGameplayController : MonoBehaviour
 
     public delegate void GameSignalEvent();
 
+    public delegate void GameSignalEvent2(int finalScore);
+
     public delegate void FoodLineUpChangeEvent(List<FoodLineUp> list, bool first);
 
     public event CustomerOrderCorrectEvent OnCustomerOrderCorrect;
@@ -66,7 +63,7 @@ public class BamTruckGameplayController : MonoBehaviour
 
     public event GameSignalEvent OnGameStarted;
 
-    public event GameSignalEvent OnGameEnded;
+    public event GameSignalEvent2 OnGameEnded;
 
     public event CustomerChangeEvent OnCustomerChanged;
 
@@ -86,6 +83,11 @@ public class BamTruckGameplayController : MonoBehaviour
     private void Awake()
     {
         invDuration = 1.0f / duration;
+    }
+
+    public void EndGame()
+    {
+        timeLeft = 0.0f;
     }
 
     public void InitializeValues()
@@ -238,17 +240,9 @@ public class BamTruckGameplayController : MonoBehaviour
     private void GameOver()
     {
         gameStarted = false;
-        OnGameEnded?.Invoke();
+        OnGameEnded?.Invoke(score);
         Debug.Log("Game Over!");
     }
-
-    /*
-    private bool DecreaseHealth()
-    {
-        life--;
-        return life <= 0;
-    }
-    */
 
     private GameCustomer GetNext(int diff)
     {

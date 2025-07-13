@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -8,8 +9,9 @@ public class CustomerSwitchingWidget : MonoBehaviour
     [SerializeField] private RectTransform middle;
     [SerializeField] private RectTransform end;
 
-    [SerializeField] private RectTransform customer1;
-    [SerializeField] private RectTransform customer2;
+    [SerializeField] private List<RectTransform> customers;
+    private List<int> customerIndex = new();
+    private int curCustomerIndex;
 
     [SerializeField] private float duration = 0.25f;
 
@@ -18,13 +20,24 @@ public class CustomerSwitchingWidget : MonoBehaviour
 
     private void Awake()
     {
+        int i = 0;
+        foreach (var c in customers)
+        {
+            customerIndex.Add(i);
+            i++;
+            c.anchoredPosition = start.anchoredPosition;
+        }
+
         ResetStates();
     }
 
     public void ResetStates()
     {
-        customer1.anchoredPosition = start.anchoredPosition;
-        customer2.anchoredPosition = start.anchoredPosition;
+        foreach (var c in customers)
+        {
+            c.anchoredPosition = start.anchoredPosition;
+        }
+
         currentCustomer = null;
         nextCustomer = null;
     }
@@ -58,14 +71,31 @@ public class CustomerSwitchingWidget : MonoBehaviour
         Sequence seq = DOTween.Sequence();
         if (currentCustomer == null)
         {
-            (currentCustomer, nextCustomer) = (customer1, customer2);
+            customerIndex.Shuffle();
+            curCustomerIndex = customerIndex[^1];
+            customerIndex.RemoveAt(customerIndex.Count - 1);
 
-            var customer = currentCustomer.GetComponentInChildren<CustomerWidget>();
+            nextCustomer = customers[curCustomerIndex];
+
+            var customer = nextCustomer.GetComponentInChildren<CustomerWidget>();
             customer.MakeNeutralFace();
-            seq.Append(TweenIn(currentCustomer));
+
+            seq.Append(TweenIn(nextCustomer));
+            seq.AppendCallback(() =>
+            {
+                currentCustomer = nextCustomer;
+                nextCustomer = null;
+            });
         }
         else
         {
+            int oldIndex = curCustomerIndex;
+            customerIndex.Shuffle();
+            curCustomerIndex = customerIndex[^1];
+            customerIndex[^1] = oldIndex;
+
+            nextCustomer = customers[curCustomerIndex];
+
             var customer = nextCustomer.GetComponentInChildren<CustomerWidget>();
             customer.MakeNeutralFace();
 
@@ -77,7 +107,8 @@ public class CustomerSwitchingWidget : MonoBehaviour
                 var tr = customer.GetComponent<RectTransform>();
                 tr.localScale = Vector3.one;
 
-                (nextCustomer, currentCustomer) = (currentCustomer, nextCustomer);
+                currentCustomer = nextCustomer;
+                nextCustomer = null;
             });
         }
 

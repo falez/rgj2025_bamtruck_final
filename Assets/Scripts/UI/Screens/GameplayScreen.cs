@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -51,7 +50,7 @@ public class GameplayScreen : ScreenBase
 
     private void GameplayController_OnFoodLineUpChanged(List<FoodLineUp> list, bool first)
     {
-        gameHeaderWidget.UpdateHeader(list);
+        gameHeaderWidget.UpdateHeader(list, first);
     }
 
     private void GameplayController_OnCustomerOrderCorrect(int index)
@@ -88,7 +87,7 @@ public class GameplayScreen : ScreenBase
         */
     }
 
-    private void GameplayController_OnGameEnded()
+    private void GameplayController_OnGameEnded(int finalScore)
     {
         gestureRecognizer.AllowRecognition = false;
         bubble.SetActive(false);
@@ -96,6 +95,7 @@ public class GameplayScreen : ScreenBase
 
         gameOverWidget.Play(() =>
         {
+            gameOverPopUp.SetData(finalScore);
             ScreenManager.Show(gameOverPopUp);
         });
 
@@ -160,6 +160,7 @@ public class GameplayScreen : ScreenBase
 
     private void OnClickPause()
     {
-        Hide();
+        gameplayController.EndGame();
+        gestureRecognizer.AllowRecognition = false;
     }
 }

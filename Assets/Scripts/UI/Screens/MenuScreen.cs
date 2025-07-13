@@ -8,6 +8,7 @@ public class MenuScreen : ScreenBase
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button upgradeButton;
 
+    [SerializeField] private ShopPopUp shopPopUp;
     [SerializeField] private DailyLoginPopUp dailyPopUp;
     [SerializeField] private SettingsScreen settingsScreen;
     [SerializeField] private GameplayScreen gameScreen;
@@ -32,8 +33,9 @@ public class MenuScreen : ScreenBase
 
     private void OnClickUpgrades()
     {
-        PlayerData.Clear();
-        SceneManager.LoadScene("MenuScene");
+        //PlayerData.Clear();
+        //SceneManager.LoadScene("MenuScene");
+        ScreenManager.Show(shopPopUp);
     }
 
     private void OnClickPlay()
@@ -58,9 +60,7 @@ public class MenuScreen : ScreenBase
     {
         focusTransitioner.UnfocusIsHide = false;
 
-        /*
         if (DailySystem.CheckDailyLogin())
             ScreenManager.Show(dailyPopUp);
-        */
     }
 }

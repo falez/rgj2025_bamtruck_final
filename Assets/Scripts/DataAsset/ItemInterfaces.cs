@@ -22,6 +22,12 @@ public struct ItemData : IItem
     public readonly string Id => id;
 
     public readonly Sprite Sprite => sprite;
+
+    public ItemData(string id, Sprite sprite)
+    {
+        this.id = id;
+        this.sprite = sprite;
+    }
 }
 
 [Serializable]
@@ -31,6 +37,12 @@ public struct ItemReward : IItemReward
     [SerializeField] private ItemData data;
     public readonly IItem Data => data;
     public readonly int Amount => amount;
+
+    public ItemReward(int amount, ItemData data)
+    {
+        this.amount = amount;
+        this.data = data;
+    }
 }
 
 [Serializable]

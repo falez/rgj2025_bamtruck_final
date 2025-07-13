@@ -33,4 +33,4 @@ MonoBehaviour:
     amount: 50
   - data: {fileID: 11400000, guid: 2d7a8093e0b5e7747939afbefc6603fe, type: 2}
     iconOverride: {fileID: 0}
-    amount: 50
+    amount: 100

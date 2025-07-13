@@ -12,5 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7d9427a9bebc0640908a406a3d37e6a, type: 3}
   m_Name: GEM
   m_EditorClassIdentifier: 
-  id: COIN
-  sprite: {fileID: 21300000, guid: ce888251953907346a5e56de958ec2c2, type: 3}
+  sprite: {fileID: 21300000, guid: 6fec74f5f530b114da1746045449a182, type: 3}
