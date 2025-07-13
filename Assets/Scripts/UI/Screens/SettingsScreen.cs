@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,7 +6,7 @@ public class SettingsScreen : PopUpBase
 {
     [SerializeField] private Button resetButton;
 
-    private void Start()
+    protected override void OnStart()
     {
         resetButton.onClick.AddListener(() =>
         {
